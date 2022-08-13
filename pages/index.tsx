@@ -1,37 +1,39 @@
 import type { NextPage } from "next";
 import Head from "next/head";
 import Link from "next/link";
-import { Article, loadArticles } from "../lib/articles";
+import { ArticleMetadata, loadArticleMetadatum } from "../lib/articles";
 
 export async function getStaticProps() {
-  const articles = await loadArticles();
+  const metadatum = await loadArticleMetadatum();
   return {
     props: {
-      articles,
+      metadatum,
     },
   };
 }
 
 type HomeProps = {
-  articles: Article[];
+  metadatum: ArticleMetadata[];
 };
 
-const Home: NextPage<HomeProps> = ({ articles }) => {
+const Home: NextPage<HomeProps> = ({ metadatum }) => {
   return (
     <div>
       <Head>
         <title>tattsun.me</title>
       </Head>
 
-      {articles.map((article) => (
-        <div key={article.slug}>
-          <Link href={`/articles/${article.slug}`}>
-            <a>
-              {article.date} {article.matter.title}
-            </a>
-          </Link>
-        </div>
-      ))}
+      <main className="prose prose-lg">
+        {metadatum.map((metadata) => (
+          <div key={metadata.slug}>
+            <Link href={`/articles/${metadata.slug}`}>
+              <a>
+                {metadata.date} {metadata.matter.title}
+              </a>
+            </Link>
+          </div>
+        ))}
+      </main>
     </div>
   );
 };

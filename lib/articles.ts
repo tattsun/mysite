@@ -13,10 +13,13 @@ export interface Matter {
   description?: string;
 }
 
-export interface Article {
+export interface ArticleMetadata {
   slug: string;
-  matter: Matter;
   date: string;
+  matter: Matter;
+}
+
+export interface Article extends ArticleMetadata {
   content: string;
 }
 
@@ -31,38 +34,51 @@ function getDateFromSlug(slug: string): string {
   return result[0];
 }
 
-export async function loadArticles(): Promise<Article[]> {
+export async function loadArticleMetadatum(): Promise<ArticleMetadata[]> {
   const paths = fs.readdirSync(basePath);
 
-  const articles: Article[] = [];
+  const metadatum: ArticleMetadata[] = [];
 
   for (const p of paths) {
     const slug = path.parse(p).name;
 
     // Load file and parse into slug and raw content
     const fileContent = fs.readFileSync(path.join(basePath, p));
-    const { data, content } = matter(fileContent);
+    const { data } = matter(fileContent);
 
-    // Parse file as Markdown
-    const result = await unified()
-      .use(remarkParse)
-      .use(remarkPrism)
-      .use(remarkRehype)
-      .use(rehypeSlug)
-      .use(rehypeStringify)
-      .process(content);
-
-    articles.push({
+    metadatum.push({
       slug,
       matter: data,
       date: getDateFromSlug(slug),
-      content: result.toString(),
     });
   }
 
-  return articles.sort((a, b) => {
+  return metadatum.sort((a, b) => {
     if (a.slug < b.slug) return 1;
     if (a.slug > b.slug) return -1;
     return 0;
   });
+}
+
+export async function loadArticle(slug: string): Promise<Article> {
+  const fileContent = fs.readFileSync(path.join(basePath, `${slug}.md`));
+  const { data, content } = matter(fileContent);
+
+  // Parse file as Markdown
+  const result = await unified()
+    .use(remarkParse)
+    .use(remarkPrism)
+    .use(remarkRehype)
+    .use(rehypeSlug)
+    .use(rehypeStringify)
+    .process(content);
+
+  const article = {
+    slug,
+    matter: data,
+    date: getDateFromSlug(slug),
+    content: result.toString(),
+  };
+
+  return article;
 }

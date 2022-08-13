@@ -1,25 +1,29 @@
 import { GetStaticPaths, GetStaticProps, NextPage } from "next";
 import { NextSeo } from "next-seo";
 import React from "react";
-import { Article, loadArticles } from "../../lib/articles";
+import { Article, loadArticle, loadArticleMetadatum } from "../../lib/articles";
 
 export const getStaticPaths: GetStaticPaths = async () => {
-  const articles = await loadArticles();
+  const metadatum = await loadArticleMetadatum();
   return {
-    paths: articles.map((article) => ({ params: { slug: article.slug } })),
+    paths: metadatum.map((metadata) => ({ params: { slug: metadata.slug } })),
     fallback: false,
   };
 };
 
 export const getStaticProps: GetStaticProps = async (context) => {
-  const articles = await loadArticles();
-  const article = articles.find(
-    (article) => article.slug === context.params?.slug
-  );
-
-  if (article == null) {
-    throw new Error(`article not found: ${context.params?.slug}`);
+  function getSlug() {
+    if (
+      context.params == null ||
+      typeof context.params.slug === "object" ||
+      context.params.slug == null
+    ) {
+      return "";
+    }
+    return context.params.slug;
   }
+
+  const article = await loadArticle(getSlug());
 
   return {
     props: {
